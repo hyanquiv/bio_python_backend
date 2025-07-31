@@ -1,42 +1,38 @@
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file
 import os
 from aligner import run_alignment
 import uuid
+import io
 
 app = Flask(__name__)
 
 @app.route("/align", methods=["POST"])
 def align():
-    try:
-        file = request.files["file"]
-        if not file:
-            return jsonify({"error": "No file provided"}), 400
+    file = request.files["file"]
+    input_path = f"tmp_{uuid.uuid4()}.fasta"
+    output_path = f"aligned_{uuid.uuid4()}.fasta"
 
-        input_path = f"tmp_{uuid.uuid4()}.fasta"
-        output_path = f"aligned_{uuid.uuid4()}.fasta"
+    # Guardar input
+    file.save(input_path)
 
-        # Guardar el archivo subido
-        file.save(input_path)
+    # Ejecutar alineamiento
+    run_alignment(input_path, output_path)
 
-        # Ejecutar alineamiento
-        run_alignment(input_path, output_path)
+    # Leer el archivo de salida a memoria
+    with open(output_path, "rb") as f:
+        data = f.read()
 
-        # Enviar archivo alineado
-        return send_file(
-            output_path,
-            as_attachment=True,
-            mimetype='text/plain'
-        )
+    # Borrar archivos temporales
+    os.remove(input_path)
+    os.remove(output_path)
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        # Limpieza de archivos temporales
-        if os.path.exists(input_path):
-            os.remove(input_path)
-        if os.path.exists(output_path):
-            os.remove(output_path)
+    # Enviar contenido como archivo descargable
+    return send_file(
+        io.BytesIO(data),
+        as_attachment=True,
+        download_name="aligned_output.fasta",
+        mimetype="text/plain"
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
