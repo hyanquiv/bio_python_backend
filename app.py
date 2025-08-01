@@ -6,13 +6,20 @@ import io
 
 app = Flask(__name__)
 
+# Crear carpetas si no existen
+os.makedirs("in", exist_ok=True)
+os.makedirs("out", exist_ok=True)
+
 @app.route("/align", methods=["POST"])
 def align():
-    file = request.files["file"]
-    input_path = f"tmp_{uuid.uuid4()}.fasta"
-    output_path = f"aligned_{uuid.uuid4()}.fasta"
+    # Rutas de archivos
+    input_filename = f"{uuid.uuid4()}.fasta"
+    output_filename = f"{uuid.uuid4()}.fasta"
+    input_path = os.path.join("in", input_filename)
+    output_path = os.path.join("out", output_filename)
 
     # Guardar input
+    file = request.files["file"]
     file.save(input_path)
 
     # Ejecutar alineamiento
@@ -21,10 +28,6 @@ def align():
     # Leer el archivo de salida a memoria
     with open(output_path, "rb") as f:
         data = f.read()
-
-    # Borrar archivos temporales
-    os.remove(input_path)
-    os.remove(output_path)
 
     # Enviar contenido como archivo descargable
     return send_file(

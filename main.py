@@ -1,8 +1,13 @@
 from aligner import run_alignment
 from io_utils import read_fasta
+import os
 
-input_file = "example.fasta"
-output_file = "aligned_output.fasta"
+# Crear carpetas si no existen
+os.makedirs("in", exist_ok=True)
+os.makedirs("out", exist_ok=True)
+
+input_file = os.path.join("in", "example.fasta")
+output_file = os.path.join("out", "aligned_output.fasta")
 
 print("Leyendo archivo...")
 seqs = read_fasta(input_file)
