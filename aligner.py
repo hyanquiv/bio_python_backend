@@ -1,9 +1,19 @@
 import subprocess
-from shutil import which
+import os
 
-def run_alignment(input_file, output_file):
-    if not which("aligner"):
-        raise EnvironmentError("aligner no está en el PATH. Instálalo o colócalo en ./aligner/")
-    algn_path = "./aligner.exe"
-    cmd = [algn_path, "-align", input_file, "-output", output_file]
-    subprocess.run(cmd, check=True)
+def run_alignment(input_file, output_prefix="aligned"):
+    exec_dir = "./exec"
+
+    # Definir rutas de salida
+    muscle_output = f"{output_prefix}_muscle.fasta"
+    msa_output = f"{output_prefix}_msa.fasta"
+
+    # Ejecutar Muscle5
+    muscle_exe = os.path.join(exec_dir, "muscle5.exe")
+    subprocess.run([muscle_exe, "-align", input_file, "-output", muscle_output], check=True)
+
+    # Ejecutar MSAligner
+    msa_exe = os.path.join(exec_dir, "MSAligner.exe")
+    subprocess.run([msa_exe, input_file, msa_output], check=True)
+
+    return muscle_output, msa_output
